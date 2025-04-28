@@ -21,12 +21,12 @@
 	},
 	"require"    : {
 		"php"                      : ">=5.4",
-		"composer/installers"      : "~1.0",
-		"phpdocumentor/reflection" : "~3.0",
+		"composer/installers"      : "^2.3",
+		"phpdocumentor/reflection" : "^6.1",
 		"erusev/parsedown"         : "~1.7",
 		"scribu/lib-posts-to-posts": "dev-master@dev",
 		"scribu/scb-framework"     : "dev-master@dev",
-		"psr/log"                  : "~1.0"
+		"psr/log"                  : "^3.0"
 	},
 	"require-dev" : {
 		"wp-phpunit/wp-phpunit": "^6.8",
