@@ -22,7 +22,7 @@
 	"require"    : {
 		"php"                      : ">=5.4",
 		"composer/installers"      : "^2.3",
-		"phpdocumentor/reflection" : "^6.1",
+		"phpdocumentor/reflection" : "~5.3",
 		"erusev/parsedown"         : "~1.7",
 		"scribu/lib-posts-to-posts": "dev-master@dev",
 		"scribu/scb-framework"     : "dev-master@dev",
