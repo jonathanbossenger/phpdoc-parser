@@ -24,8 +24,6 @@
 		"composer/installers"      : "~2.0",
 		"phpstan/phpdoc-parser"    : "^2.0",
 		"nikic/php-parser"         : "^5.0",
-		"scribu/lib-posts-to-posts": "dev-master@dev",
-		"scribu/scb-framework"     : "dev-master@dev",
 		"psr/log"                  : "^2.0|^3.0"
 	},
 	"require-dev" : {

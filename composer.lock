@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aecff1e9691d5e888280a6696549c248",
+    "content-hash": "f94e5da5914db5bdc322350f25b96c7e",
     "packages": [
         {
             "name": "composer/installers",
@@ -306,88 +306,6 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
-        },
-        {
-            "name": "scribu/lib-posts-to-posts",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/scribu/wp-lib-posts-to-posts.git",
-                "reference": "a695438e455587fa228e993d05b4431cde99af1b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/scribu/wp-lib-posts-to-posts/zipball/a695438e455587fa228e993d05b4431cde99af1b",
-                "reference": "a695438e455587fa228e993d05b4431cde99af1b",
-                "shasum": ""
-            },
-            "require": {
-                "scribu/scb-framework": "dev-master"
-            },
-            "default-branch": true,
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "autoload.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-2.0+"
-            ],
-            "description": "A library for many-to-many relationships in WordPress",
-            "homepage": "https://github.com/scribu/wp-lib-posts-to-posts",
-            "support": {
-                "source": "https://github.com/scribu/wp-lib-posts-to-posts/tree/master"
-            },
-            "time": "2016-02-15T12:08:59+00:00"
-        },
-        {
-            "name": "scribu/scb-framework",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/scribu/wp-scb-framework.git",
-                "reference": "d35d5126c6d323711dd14b9d97aaa927eaaba123"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/scribu/wp-scb-framework/zipball/d35d5126c6d323711dd14b9d97aaa927eaaba123",
-                "reference": "d35d5126c6d323711dd14b9d97aaa927eaaba123",
-                "shasum": ""
-            },
-            "default-branch": true,
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "load-composer.php",
-                    "Util.php"
-                ],
-                "classmap": [
-                    "."
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-3.0+"
-            ],
-            "authors": [
-                {
-                    "name": "Cristi Burcă",
-                    "homepage": "http://scribu.net/"
-                }
-            ],
-            "description": "A set of useful classes for faster plugin development",
-            "homepage": "https://github.com/scribu/wp-scb-framework",
-            "keywords": [
-                "wordpress"
-            ],
-            "support": {
-                "issues": "https://github.com/scribu/wp-scb-framework/issues",
-                "source": "https://github.com/scribu/wp-scb-framework",
-                "wiki": "https://github.com/scribu/wp-scb-framework/wiki"
-            },
-            "time": "2020-03-15T20:51:58+00:00"
         }
     ],
     "packages-dev": [
@@ -3637,10 +3555,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "scribu/lib-posts-to-posts": 20,
-        "scribu/scb-framework": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

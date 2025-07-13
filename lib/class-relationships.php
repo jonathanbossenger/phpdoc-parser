@@ -49,7 +49,7 @@ class Relationships {
 	}
 
 	/**
-	 * Load the posts2posts from the composer package if it is not loaded already.
+	 * Load the posts2posts from the WordPress plugin if available.
 	 */
 	public function require_posts_to_posts() {
 		// Only initialize if P2P classes exist (from WordPress plugin)
