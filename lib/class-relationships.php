@@ -52,11 +52,16 @@ class Relationships {
 	 * Load the posts2posts from the composer package if it is not loaded already.
 	 */
 	public function require_posts_to_posts() {
-		// Initializes the database tables
-		\P2P_Storage::init();
+		// Only initialize if P2P classes exist (from WordPress plugin)
+		if ( class_exists( 'P2P_Storage' ) ) {
+			// Initializes the database tables
+			\P2P_Storage::init();
+		}
 
-		// Initializes the query mechanism
-		\P2P_Query_Post::init();
+		if ( class_exists( 'P2P_Query_Post' ) ) {
+			// Initializes the query mechanism
+			\P2P_Query_Post::init();
+		}
 	}
 
 	/**
@@ -69,6 +74,10 @@ class Relationships {
 	 * @link  https://github.com/scribu/wp-posts-to-posts/wiki/p2p_register_connection_type
 	 */
 	public function register_post_relationships() {
+		// Only register relationships if P2P functions are available
+		if ( ! function_exists( 'p2p_register_connection_type' ) ) {
+			return;
+		}
 
 		/*
 		 * Functions to functions, methods and hooks
@@ -128,7 +137,7 @@ class Relationships {
 	public function wp_parser_starting_import() {
 		$importer = new Importer;
 
-		if ( ! $this->p2p_tables_exist() ) {
+		if ( ! $this->p2p_tables_exist() && class_exists( 'P2P_Storage' ) ) {
 			\P2P_Storage::init();
 			\P2P_Storage::install();
 		}
@@ -248,6 +257,11 @@ class Relationships {
 	 * After import has run, go back and connect all the posts.
 	 */
 	public function wp_parser_ending_import() {
+
+		// Only process relationships if P2P functions are available
+		if ( ! function_exists( 'p2p_delete_connections' ) || ! function_exists( 'p2p_type' ) ) {
+			return;
+		}
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Removing current relationships...' );
