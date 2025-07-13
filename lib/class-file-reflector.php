@@ -323,7 +323,9 @@ class File_Reflector extends NodeVisitorAbstract {
 			case 'Stmt_Class':
 				// Process class and assign queued methods
 				$class_data = $this->processClass( $node );
-				$this->classes[] = $class_data;
+				if ( $class_data !== null ) {
+					$this->classes[] = $class_data;
+				}
 
 				$this->method_uses_queue = array();
 				array_pop( $this->location );
@@ -361,12 +363,21 @@ class File_Reflector extends NodeVisitorAbstract {
 	 * @return array Class data.
 	 */
 	protected function processClass( Node\Stmt\Class_ $node ) {
+		// Skip anonymous classes (where name is null)
+		if ( ! $node->name ) {
+			return null;
+		}
+
 		$docblock = $this->parseDocComment( $node->getDocComment() );
 
 		return array(
 			'name' => $node->name->toString(),
 			'line' => $node->getStartLine(),
 			'end_line' => $node->getEndLine(),
+			'final' => $node->isFinal(),
+			'abstract' => $node->isAbstract(),
+			'extends' => $node->extends ? $node->extends->toString() : '',
+			'implements' => $node->implements ? array_map( fn($impl) => $impl->toString(), $node->implements ) : array(),
 			'docblock' => $docblock,
 			'methods' => $this->processClassMethods( $node ),
 			'properties' => $this->processClassProperties( $node ),

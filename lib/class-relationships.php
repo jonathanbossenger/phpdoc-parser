@@ -185,7 +185,7 @@ class Relationships {
 			// Functions to Functions
 			$to_type = $this->post_types['function'];
 			foreach ( (array) @$data['uses']['functions'] as $to_function ) {
-				$to_function_slug = $this->names_to_slugs( $to_function['name'], $data['namespace'] );
+				$to_function_slug = $this->names_to_slugs( $to_function['name'], $data['namespace'] ?? '' );
 
 				$this->relationships[ $from_type ][ $post_id ][ $to_type ][] = $to_function_slug;
 			}
@@ -199,7 +199,7 @@ class Relationships {
 				} else {
 					$to_method_slug = $to_method['name'];
 				}
-				$to_method_slug = $this->names_to_slugs( $to_method_slug, $data['namespace'] );
+				$to_method_slug = $this->names_to_slugs( $to_method_slug, $data['namespace'] ?? '' );
 
 				$this->relationships[ $from_type ][ $post_id ][ $to_type ][] = $to_method_slug;
 			}
@@ -219,7 +219,7 @@ class Relationships {
 			// Methods to Functions
 			$to_type = $this->post_types['function'];
 			foreach ( (array) @$data['uses']['functions'] as $to_function ) {
-				$to_function_slug = $this->names_to_slugs( $to_function['name'], $data['namespace'] );
+				$to_function_slug = $this->names_to_slugs( $to_function['name'], $data['namespace'] ?? '' );
 
 				$this->relationships[ $from_type ][ $post_id ][ $to_type ][] = $to_function_slug;
 			}
@@ -237,7 +237,7 @@ class Relationships {
 				} else {
 					$to_method_slug = $to_method['name'];
 				}
-				$to_method_slug = $this->names_to_slugs( $to_method_slug, $data['namespace'] );
+				$to_method_slug = $this->names_to_slugs( $to_method_slug, $data['namespace'] ?? '' );
 
 				$this->relationships[ $from_type ][ $post_id ][ $to_type ][] = $to_method_slug;
 			}

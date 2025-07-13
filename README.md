@@ -45,7 +45,9 @@ npm start
 npm run wp-env start
 ```
 
-This will start WordPress at `http://localhost:8888` (admin: `http://localhost:8888/wp-admin/` - admin/password)
+This will start two WordPress environments:
+- **Development**: `http://localhost:8888` (admin: `http://localhost:8888/wp-admin/` - admin/password)
+- **Tests**: `http://localhost:8889` (for automated testing only)
 
 ### 4. Run Tests
 
@@ -80,18 +82,39 @@ The parser uses:
 
 ### Running the Parser
 
-After activating the plugin in your WordPress environment:
+The parser runs via WP-CLI commands in the **development environment** (port 8888). There are two ways to run WP-CLI commands:
+
+#### Option 1: Using Host WP-CLI (Recommended)
+
+The project includes a `wp-cli.yml` configuration file that connects to the development environment:
 
 ```bash
-# Activate the plugin
-wp plugin activate phpdoc-parser
+# Activate plugins (requires wp-cli installed on host)
+wp plugin activate phpdoc-parser posts-to-posts
 
 # Parse WordPress core files
-wp parser create /path/to/wordpress/source --user=admin
+wp parser create /var/www/html --user=admin --quick
 
-# Parse specific directory
+# Parse specific directory  
 wp parser create /path/to/plugin/source --user=admin
+
+# View parsed results at http://localhost:8888/wp-admin/
 ```
+
+#### Option 2: Using Docker Container
+
+```bash
+# Find the development WordPress container ID
+WORDPRESS_CONTAINER=$(docker ps --filter "name=wordpress-1" --format "{{.ID}}")
+
+# Activate plugins in development environment
+docker exec $WORDPRESS_CONTAINER wp plugin activate phpdoc-parser posts-to-posts
+
+# Parse WordPress core files in development environment
+docker exec $WORDPRESS_CONTAINER wp parser create /var/www/html --user=admin --quick
+```
+
+**Important**: Always use the development environment (8888) for WP-CLI operations. The test environment (8889) is only for automated PHPUnit tests.
 
 ### Testing
 
@@ -111,11 +134,14 @@ composer run test:coverage
 ### Using wp-env Commands
 
 ```bash
-# Access WordPress container
+# Access development WordPress container
+npm run wp-env run wordpress bash
+
+# Access test WordPress container (for debugging tests only)
 npm run wp-env run tests-wordpress bash
 
-# Run WP-CLI commands
-npm run wp-env run tests-wordpress wp --info
+# Run WP-CLI in development environment
+npm run wp-env run wordpress wp --info
 
 # Stop environment
 npm run wp-env stop
@@ -123,6 +149,11 @@ npm run wp-env stop
 # Reset environment
 npm run wp-env clean
 ```
+
+### Environment Usage
+
+- **Development (localhost:8888)**: Use for plugin development, WP-CLI commands, and manual testing
+- **Tests (localhost:8889)**: Automatically used by `npm test` - don't run manual commands here
 
 ## Parsed Output
 

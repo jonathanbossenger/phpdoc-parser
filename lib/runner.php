@@ -251,6 +251,7 @@ function export_hook( $hook ) {
 	return array(
 		'name' => $hook->getName(),
 		'line' => $hook->getLine(),
+		'end_line' => $hook->getLine(),
 		'type' => $hook->getType(),
 		'arguments' => $hook->getArguments(),
 		'doc' => $doc,

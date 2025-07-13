@@ -88,7 +88,12 @@ class Method_Call_Reflector {
 			}
 
 			// Handle variable class instantiation like new $class()
-			return $this->pretty_printer->prettyPrintExpr( $this->node->class );
+			if ( $this->node->class instanceof Node\Expr ) {
+				return $this->pretty_printer->prettyPrintExpr( $this->node->class );
+			}
+			
+			// For anonymous classes or unsupported cases, return null
+			return null;
 		}
 
 		// Handle regular method calls
