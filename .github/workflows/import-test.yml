@@ -9,6 +9,7 @@ on:
 jobs:
   test-import:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     env:
       WP_ENV_PHP_VERSION: '8.2'
@@ -116,5 +117,5 @@ jobs:
       - name: Cleanup on failure
         if: failure()
         run: |
-          echo "Import test failed. Dumping logs..."
-          npm run wp-env logs
+          echo "Import test failed. Checking environment status..."
+          docker ps
