@@ -40,6 +40,15 @@ jobs:
         run: |
           npm run wp-env run cli -- -- wp plugin activate phpdoc-parser posts-to-posts
 
+      - name: Debug plugin and command availability
+        run: |
+          echo "Checking plugin status..."
+          npm run wp-env run cli -- -- wp plugin list
+          echo "Checking available commands..."
+          npm run wp-env run cli -- -- wp help
+          echo "Checking if parser command exists..."
+          npm run wp-env run cli -- -- wp help parser || echo "Parser command not found"
+
       - name: Run sample import (subset of files)
         run: |
           # Import a small subset of WordPress core files for testing
