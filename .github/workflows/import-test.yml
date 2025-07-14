@@ -3,7 +3,7 @@ name: Import Test
 on:
   pull_request:
   push:
-    branches: [ main, master, modernize-parser-php8 ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
