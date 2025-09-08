@@ -93,7 +93,7 @@ The project includes a `wp-cli.yml` configuration file that connects to the deve
 wp plugin activate phpdoc-parser posts-to-posts
 
 # Parse WordPress core files
-wp parser create /var/www/html --user=admin --quick
+wp parser create /var/www/html --user=admin
 
 # Parse specific directory  
 wp parser create /path/to/plugin/source --user=admin
@@ -111,7 +111,7 @@ WORDPRESS_CONTAINER=$(docker ps --filter "name=wordpress-1" --format "{{.ID}}")
 docker exec $WORDPRESS_CONTAINER wp plugin activate phpdoc-parser posts-to-posts
 
 # Parse WordPress core files in development environment
-docker exec $WORDPRESS_CONTAINER wp parser create /var/www/html --user=admin --quick
+docker exec $WORDPRESS_CONTAINER wp parser create /var/www/html --user=admin
 ```
 
 **Important**: Always use the development environment (8888) for WP-CLI operations. The test environment (8889) is only for automated PHPUnit tests.

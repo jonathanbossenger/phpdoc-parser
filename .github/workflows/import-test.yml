@@ -52,7 +52,7 @@ jobs:
       - name: Run sample import (subset of files)
         run: |
           # Import a small subset of WordPress core files for testing
-          npm run wp-env run cli -- -- wp parser create /var/www/html/wp-includes/functions.php --user=admin --quick
+          npm run wp-env run cli -- -- wp parser create /var/www/html/wp-includes/functions.php --user=admin
 
       - name: Verify import worked
         run: |
