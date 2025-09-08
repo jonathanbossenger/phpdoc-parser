@@ -30,11 +30,12 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Install Node.js dependencies
+      - name: Install
         run: npm ci
 
-      - name: Setup WordPress environment
-        run: npm run setup
+      - name: Setup Environment
+        run: |
+          npm run setup
 
-      - name: Run tests
+      - name: Test
         run: npm run test

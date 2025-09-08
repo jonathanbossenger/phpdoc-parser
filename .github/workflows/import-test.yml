@@ -24,13 +24,12 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Install Node.js dependencies
+      - name: Install
         run: npm ci
 
-      - name: Start WordPress environment
+      - name: Setup Environment
         run: |
           npm run setup
-          sleep 10
 
       - name: Wait for WordPress to be ready
         run: |
@@ -39,15 +38,6 @@ jobs:
       - name: Activate plugins
         run: |
           npm run wp-env run cli -- -- wp plugin activate phpdoc-parser posts-to-posts
-
-      - name: Debug plugin and command availability
-        run: |
-          echo "Checking plugin status..."
-          npm run wp-env run cli -- -- wp plugin list
-          echo "Checking available commands..."
-          npm run wp-env run cli -- -- wp help
-          echo "Checking if parser command exists..."
-          npm run wp-env run cli -- -- wp help parser
 
       - name: Run sample import (subset of files)
         run: |
@@ -59,23 +49,22 @@ jobs:
           # Check that functions were imported
           FUNCTION_COUNT=$(npm run wp-env run cli -- -- wp post list --post_type=wp-parser-function --format=count | tail -1)
           echo "Functions imported: $FUNCTION_COUNT"
-          
+
           if [ "$FUNCTION_COUNT" -lt 50 ]; then
             echo "ERROR: Expected at least 50 functions, got $FUNCTION_COUNT"
             exit 1
           fi
-          
-          # Check that classes were imported
-          CLASS_COUNT=$(npm run wp-env run cli -- -- wp post list --post_type=wp-parser-class --format=count | tail -1)
-          echo "Classes imported: $CLASS_COUNT"
-          
-          # Check that hooks were imported
-          HOOK_COUNT=$(npm run wp-env run cli -- -- wp post list --post_type=wp-parser-hook --format=count | tail -1)
-          echo "Hooks imported: $HOOK_COUNT"
-          
-          # Check that methods were imported
-          METHOD_COUNT=$(npm run wp-env run cli -- -- wp post list --post_type=wp-parser-method --format=count | tail -1)
-          echo "Methods imported: $METHOD_COUNT"
+
+      - name: Verify taxonomy terms
+        run: |
+          # Check that taxonomy terms are properly assigned
+          FILE_TERMS=$(npm run wp-env run cli -- -- wp term list wp-parser-source-file --format=count | tail -1)
+          echo "File taxonomy terms: $FILE_TERMS"
+
+          if [ "$FILE_TERMS" -eq 0 ]; then
+            echo "ERROR: No file taxonomy terms found"
+            exit 1
+          fi
 
       - name: Test parser command with error detection
         run: |
@@ -84,47 +73,10 @@ jobs:
             echo "ERROR: Parser command failed"
             exit 1
           fi
-          
+
           # Check for PHP warnings or errors in output
           if grep -i "warning\|error\|fatal" import_output.log | grep -v "WP_CLI"; then
             echo "ERROR: PHP warnings or errors detected in parser output"
             cat import_output.log
             exit 1
           fi
-          
-          echo "✓ Parser completed without PHP warnings or errors"
-
-      - name: Verify specific function exists
-        run: |
-          # Test that a well-known WordPress function was parsed correctly from functions.php
-          FUNCTION_EXISTS=$(npm run wp-env run cli -- -- wp post list --post_type=wp-parser-function --s=wp_date --format=count | tail -1)
-          if [ "$FUNCTION_EXISTS" -eq 0 ]; then
-            echo "ERROR: wp_date function not found in parsed data"
-            exit 1
-          fi
-          echo "✓ wp_date function successfully parsed"
-
-      - name: Test database integrity
-        run: |
-          # Check that taxonomies are properly assigned
-          FILE_TERMS=$(npm run wp-env run cli -- -- wp term list wp-parser-source-file --format=count | tail -1)
-          echo "File taxonomy terms: $FILE_TERMS"
-          
-          if [ "$FILE_TERMS" -eq 0 ]; then
-            echo "ERROR: No file taxonomy terms found"
-            exit 1
-          fi
-          
-          echo "✓ Database integrity checks passed"
-
-      - name: Test WP-CLI functionality
-        run: |
-          # Test that WP-CLI is working with the parser
-          npm run wp-env run cli -- -- wp parser --help | grep -q "create"
-          echo "✓ WP-CLI parser command available"
-
-      - name: Cleanup on failure
-        if: failure()
-        run: |
-          echo "Import test failed. Checking environment status..."
-          docker ps

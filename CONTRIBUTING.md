@@ -12,7 +12,7 @@ git clone https://github.com/your-username/phpdoc-parser.git
 cd phpdoc-parser
 npm install
 npm run setup  # First time only
-npm run test       # Run tests
+npm run test   # Run tests
 ```
 
 ## Stop containers when done
