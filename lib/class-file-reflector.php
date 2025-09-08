@@ -44,6 +44,82 @@ class File_Reflector extends FileReflector {
 	 */
 	protected $last_doc = null;
 
+	public function __construct( $file, $validate = false, $encoding = 'utf-8' ) {
+		parent::__construct( $file, false /* Force validation off */, $encoding );
+
+		// Nullable types are unknown to the parser, pretend they don't exist.
+		// The nullable type should be listed in the PHPDoc anyway.
+		$this->contents = preg_replace_callback(
+			'/(function [a-z0-9-_]+\([^{:]*?)\)(\:\s*\??\S+)?\s*[{;]/im',
+			static function( $m ) {
+				return preg_replace( '/\?(\S+)/', '$1', $m[0] ) ?: $m[0];
+			},
+			$this->contents
+		);
+
+		// Inline callables... ( $var )( $param ) can usualy be rewritten as $var( $param ).
+		$this->contents = preg_replace_callback(
+			'/(?:\s)(\(\s*\$[^()]+\))(\(.+\))/',
+			static function( $m ) {
+				return trim( $m[1], '() ' ) . trim( $m[2] );
+			},
+			$this->contents
+		);
+
+		// Short list() syntax...
+		$this->contents = preg_replace_callback(
+			'/(\s)\[(\s*\$[^();.*]{3,}?)\]\s*=/ism',
+			static function( $m ) {
+				return $m[1] . 'list( ' . $m[2] . ' ) =';
+			},
+			$this->contents
+		);
+
+		// Visibility on constants
+		$this->contents = preg_replace_callback(
+			'/\b(public|protected|private)\s+const\s+/im',
+			static function( $m ) {
+				return 'const ';
+			},
+			$this->contents
+		);
+
+		// constant arrays weren't supported.
+		$this->contents = preg_replace_callback(
+			'/\b(?<!\$|\[)([A-Z_]{5,})\[ ([^]]+)\]/',
+			function( $m ) {
+				return '$' . $m[1] . '[' . $m[2] . ']';
+			},
+			$this->contents
+		);
+
+		// Static calls on static calls. Mostly in tests.
+		$this->contents = preg_replace_callback(
+			'/([\$\[\]_a-z]+)::([\$\[\]_a-z]+)::([\$\[\]_a-z]+)/',
+			static function( $m ) {
+				//var_dump( $m );
+				if ( 'self' === $m[1] || 'static' === $m[1] ) {
+					return '$this->' . $m[2] . '->' . $m[3];
+				}
+
+				return $m[1] . '->' . $m[2]. '->' . $m[3];
+			},
+			$this->contents
+		);
+
+		// Static calls on function results. Mostly in tests.
+		$this->contents = preg_replace_callback(
+			'/([a-z_])\(\)::/',
+			static function( $m ) {
+				return $m[1] . '()->';
+			},
+			$this->contents
+		);
+
+		// Recalculate the hash, since we probably changed the contents.
+		$this->hash = md5($this->contents);
+	}
+
 	/**
 	 * Add hooks to the queue and update the node stack when we enter a node.
 	 *

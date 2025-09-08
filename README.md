@@ -23,6 +23,11 @@ After that install the dependencies using composer in the parser directory:
 composer install
 ```
 
+TEMPORARILY until the plugin supports the newer PHP syntax used within Core.
+```bash
+composer compat:munge
+```
+
 ## Running
 Activate the plugin first:
 
