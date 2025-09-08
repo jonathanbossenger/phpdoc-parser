@@ -29,7 +29,7 @@ jobs:
 
       - name: Start WordPress environment
         run: |
-          npm run wp-env start
+          npm run setup
           sleep 10
 
       - name: Wait for WordPress to be ready
