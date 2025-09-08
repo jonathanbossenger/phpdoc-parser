@@ -47,7 +47,7 @@ jobs:
           echo "Checking available commands..."
           npm run wp-env run cli -- -- wp help
           echo "Checking if parser command exists..."
-          npm run wp-env run cli -- -- wp help parser || echo "Parser command not found"
+          npm run wp-env run cli -- -- wp help parser
 
       - name: Run sample import (subset of files)
         run: |
