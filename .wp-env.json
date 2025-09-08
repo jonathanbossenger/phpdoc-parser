@@ -1,11 +1,11 @@
 {
-  "phpVersion": "8.2",
-  "plugins": [
-    "https://downloads.wordpress.org/plugin/posts-to-posts.latest-stable.zip",
-    "."
-  ],
+  "phpVersion": "8.3",
   "config": {
     "WP_DEBUG": false,
     "WP_DEBUG_DISPLAY": false
-  }
+  },
+  "plugins": [
+    ".",
+    "https://downloads.wordpress.org/plugin/posts-to-posts.latest-stable.zip"
+  ]
 }

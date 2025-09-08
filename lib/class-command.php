@@ -36,7 +36,7 @@ class Command extends WP_CLI_Command {
 	/**
 	 * Read a JSON file containing the PHPDoc markup, convert it into WordPress posts, and insert into DB.
 	 *
-	 * @synopsis <file> [--import-internal]
+	 * @synopsis <file> [--quick] [--import-internal]
 	 *
 	 * @param array $args
 	 * @param array $assoc_args
@@ -71,7 +71,7 @@ class Command extends WP_CLI_Command {
 	 * Generate JSON containing the PHPDoc markup, convert it into WordPress posts, and insert into DB.
 	 *
 	 * @subcommand create
-	 * @synopsis   <directory> [--import-internal] [--user]
+	 * @synopsis   <directory> [--quick] [--import-internal] [--user]
 	 *
 	 * @param array $args
 	 * @param array $assoc_args

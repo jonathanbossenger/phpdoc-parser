@@ -6,7 +6,7 @@ use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 /**
- * Modern reflector for static method calls using PHPParser v5.
+ * A reflection of a method call expression.
  */
 class Static_Method_Call_Reflector {
 

@@ -6,7 +6,7 @@ use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 /**
- * Modern reflector for WordPress hooks using PHPParser v5.
+ * Custom reflector for WordPress hooks.
  */
 class Hook_Reflector {
 

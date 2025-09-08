@@ -6,7 +6,7 @@ use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 /**
- * Modern reflector for method calls using PHPParser v5.
+ * A reflection of a method call expression.
  */
 class Method_Call_Reflector {
 
@@ -151,9 +151,9 @@ class Method_Call_Reflector {
 	}
 
 	/**
-	 * Check if this is a static method call.
+	 * Returns whether or not this method call is a static call
 	 *
-	 * @return bool False for instance method calls, true for static.
+	 * @return bool Whether or not this method call is a static call
 	 */
 	public function isStatic() {
 		// Constructor calls and method calls are not static

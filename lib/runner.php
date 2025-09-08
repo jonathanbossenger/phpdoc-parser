@@ -12,7 +12,7 @@ function get_wp_files( $directory ) {
 	$iterableFiles = new \RecursiveIteratorIterator(
 		new \RecursiveDirectoryIterator( $directory )
 	);
-	$files = array();
+	$files         = array();
 
 	try {
 		foreach ( $iterableFiles as $file ) {
@@ -53,11 +53,11 @@ function parse_files( $files, $root ) {
 
 		$path = ltrim( substr( $filename, strlen( $root ) ), DIRECTORY_SEPARATOR );
 
-		// Convert to legacy format expected by tests
+		// TODO proper exporter
 		$out = array(
+			'file' => export_docblock_from_data( $parsed_data['file_docblock'] ),
 			'path' => str_replace( DIRECTORY_SEPARATOR, '/', $path ),
 			'root' => $root,
-			'file' => export_docblock_from_data( $parsed_data['file_docblock'] ),
 		);
 
 		// Add file-level uses (hooks, functions, methods)
@@ -87,7 +87,7 @@ function parse_files( $files, $root ) {
 				// Add function-level uses
 				if ( ! empty( $function['uses'] ) ) {
 					$func['uses'] = export_uses( $function['uses'] );
-					
+
 					// Extract hooks from function uses
 					if ( ! empty( $function['uses']['hooks'] ) ) {
 						$func['hooks'] = export_hooks( $function['uses']['hooks'] );
@@ -132,7 +132,7 @@ function parse_files( $files, $root ) {
 						// Add method-level uses
 						if ( ! empty( $method['uses'] ) ) {
 							$method_data['uses'] = export_uses( $method['uses'] );
-							
+
 							// Extract hooks from method uses
 							if ( ! empty( $method['uses']['hooks'] ) ) {
 								$method_data['hooks'] = export_hooks( $method['uses']['hooks'] );
@@ -350,11 +350,11 @@ function export_docblock_from_data( $docblock_data ) {
 	}
 
 	// Format descriptions according to legacy expectations:
-	// - description (summary) should be plain text 
+	// - description (summary) should be plain text
 	// - long_description should be wrapped in HTML paragraphs with linebreaks removed
 	$description = $docblock_data['summary'] ?? '';
 	$long_description = $docblock_data['description'] ?? '';
-	
+
 	if ( $long_description ) {
 		// Remove linebreaks and normalize whitespace
 		$long_description = preg_replace( '/\s+/', ' ', trim( $long_description ) );
@@ -396,7 +396,7 @@ function export_docblock( $reflector ) {
  */
 function export_parse_tag( $tag_name, $value ) {
 	$result = array();
-	
+
 	if ( 'param' === $tag_name ) {
 		// Parse @param type $variable description
 		if ( preg_match( '/^(\S+)\s+(\$\w+)\s+(.*)$/', $value, $matches ) ) {
@@ -414,6 +414,6 @@ function export_parse_tag( $tag_name, $value ) {
 			$result['content'] = $matches[2];
 		}
 	}
-	
+
 	return $result;
 }
