@@ -62,7 +62,10 @@ function parse_files( $files, $root ) {
 
 		// Add file-level uses (hooks, functions, methods)
 		if ( ! empty( $parsed_data['uses'] ) ) {
-			$out['uses'] = export_uses( $parsed_data['uses'] );
+			$uses = export_uses( $parsed_data['uses'] );
+			if ( $uses ) {
+				$out['uses'] = $uses;
+			}
 		}
 
 		// Convert hooks to legacy format
