@@ -105,7 +105,7 @@ function parse_files( $files, $root ) {
 			foreach ( $parsed_data['classes'] as $class ) {
 				$class_data = array(
 					'name' => $class['name'],
-					'namespace' => $class['namespace'],
+					'namespace' => $class['namespace'] ?? 'global',
 					'line' => $class['line'],
 					'end_line' => $class['end_line'],
 					'doc' => export_docblock_from_data( $class['docblock'] ),
