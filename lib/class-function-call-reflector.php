@@ -97,6 +97,15 @@ class Function_Call_Reflector {
 	}
 
 	/**
+	 * Get the end line number of where the function call occurs.
+	 *
+	 * @return int End line number.
+	 */
+	public function getEndLine() {
+		return $this->node->getEndLine();
+	}
+
+	/**
 	 * Get the function call arguments.
 	 *
 	 * @return array List of arguments.
@@ -148,6 +157,7 @@ class Function_Call_Reflector {
 			'name' => $this->getName(),
 			'short_name' => $this->getShortName(),
 			'line' => $this->getLine(),
+			'end_line' => $this->getEndLine(),
 			'arguments' => $this->getArguments(),
 			'namespace' => $this->getNamespace(),
 			'namespaced' => $this->isNamespaced(),

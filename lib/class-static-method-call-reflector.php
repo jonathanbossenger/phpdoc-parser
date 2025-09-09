@@ -98,6 +98,15 @@ class Static_Method_Call_Reflector {
 	}
 
 	/**
+	 * Get the end line number of where the method call occurs.
+	 *
+	 * @return int End line number.
+	 */
+	public function getEndLine() {
+		return $this->node->getEndLine();
+	}
+
+	/**
 	 * Get the method call arguments.
 	 *
 	 * @return array List of arguments.

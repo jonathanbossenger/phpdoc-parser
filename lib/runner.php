@@ -251,7 +251,7 @@ function export_hook( $hook ) {
 	return array(
 		'name' => $hook->getName(),
 		'line' => $hook->getLine(),
-		'end_line' => $hook->getLine(),
+		'end_line' => $hook->getEndLine(),
 		'type' => $hook->getType(),
 		'arguments' => $hook->getArguments(),
 		'doc' => $doc,
@@ -268,7 +268,7 @@ function export_function_call( $function ) {
 	return array(
 		'name' => $function->getName(),
 		'line' => $function->getLine(),
-		'end_line' => $function->getLine(),
+		'end_line' => $function->getEndLine(),
 	);
 }
 
@@ -282,7 +282,7 @@ function export_method_call( $method ) {
 	$data = array(
 		'name' => $method->getName(),
 		'line' => $method->getLine(),
-		'end_line' => $method->getLine(),
+		'end_line' => $method->getEndLine(),
 		'static' => $method->isStatic(),
 	);
 
