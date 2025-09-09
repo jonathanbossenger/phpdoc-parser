@@ -340,7 +340,7 @@ function export_docblock_from_data( $docblock_data ) {
 				);
 
 				// Parse @param and @return tags to extract types and variables
-				if ( in_array( $tag_name, array( 'param', 'return' ), true ) ) {
+				if ( in_array( $tag_name, array( 'param', 'return', 'since', 'see' ), true ) ) {
 					$parsed_tag = export_parse_tag( $tag_name, $value );
 					$tag_data = array_merge( $tag_data, $parsed_tag );
 				}
@@ -413,7 +413,19 @@ function export_parse_tag( $tag_name, $value ) {
 		if ( preg_match( '/^(\S+)\s+(.*)$/', $value, $matches ) ) {
 			$result['types'] = array( $matches[1] );
 			$result['content'] = $matches[2];
+		} else {
+			$result['types'] = array( $value );
+			$result['content'] = '';
 		}
+	} elseif ( 'since' === $tag_name ) {
+		// @since has a description?
+		$result['description'] = $value;
+	} elseif ( 'see' === $tag_name ) {
+		// @see can have a URL or reference
+		$result = array(
+			'content' => '',
+			'refers' => $value,
+		);
 	}
 
 	return $result;
