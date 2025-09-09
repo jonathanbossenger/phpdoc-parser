@@ -425,7 +425,13 @@ function export_parse_tag( $tag_name, $value ) {
 		}
 	} elseif ( 'since' === $tag_name ) {
 		// @since has a description?
-		$result['description'] = $value;
+		if ( preg_match( '/^([0-9.]+)\s+(.*)$/', $value, $matches ) ) {
+			$result['content'] = $matches[1];
+			$result['description'] = $matches[2];
+		} else {
+		// Unsure, some files seem to trigger this, others don't.
+		//	$result['description'] = $value;
+		}
 	} elseif ( 'see' === $tag_name ) {
 		// @see can have a URL or reference
 		$result = array(
