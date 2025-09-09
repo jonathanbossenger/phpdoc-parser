@@ -355,7 +355,7 @@ function export_docblock_from_data( $docblock_data ) {
 
 	// Format descriptions according to legacy expectations:
 	// - description (summary) should be plain text
-	// - long_description should be wrapped in HTML paragraphs with linebreaks removed
+	// - long_description should be wrapped in HTML paragraphs with linebreaks removed. TODO: Convert with markdown, ` and >.
 	$description = $docblock_data['summary'] ?? '';
 	$long_description = $docblock_data['description'] ?? '';
 

@@ -572,12 +572,17 @@ class File_Reflector extends NodeVisitorAbstract {
 		}
 
 		// Split into summary and description
-		$text_lines = array_filter( explode( "\n", trim( $text_content ) ) );
+		$text_lines = explode( "\n", trim( $text_content ) );
 		if ( ! empty( $text_lines ) ) {
-			$docblock_data['summary'] = trim( $text_lines[0] );
-			if ( count( $text_lines ) > 1 ) {
-				$docblock_data['description'] = trim( implode( "\n", array_slice( $text_lines, 1 ) ) );
+			// Summary is the first lines before a blank line
+			$summary = '';
+			while ( ( $line = array_shift( $text_lines ) ) && $line ) {
+				$summary .= $line . ' ';
 			}
+			$docblock_data['summary'] = trim( $summary );
+
+			// The rest is the description.
+			$docblock_data['description'] = trim( implode( "\n", $text_lines ) );
 		}
 
 		// Extract tags
