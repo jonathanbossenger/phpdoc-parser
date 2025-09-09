@@ -76,7 +76,8 @@ function parse_files( $files, $root ) {
 			foreach ( $parsed_data['functions'] as $function ) {
 				$func = array(
 					'name' => $function['name'],
-					'namespace' => $function['namespace'],
+					'namespace' => $function['namespace'] ?? 'global',
+					'aliases' => array(),
 					'line' => $function['line'],
 					'end_line' => $function['end_line'],
 					'arguments' => export_arguments( $function['parameters'] ?? array() ),
