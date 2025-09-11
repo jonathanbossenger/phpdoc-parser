@@ -62,6 +62,16 @@ class Test_Class {
 	public function test_method( $var, $arr ) {
 		return $var;
 	}
+
+	/**
+	 * A test method that contains various @see.
+	 *
+	 * @see self::test_method_typed_hash()
+	 * @see https://wordpressfoundation.org/ The WordPress Foundation.
+	 */
+	 function test_method_see() {
+	 }
+
 }
 
 /**

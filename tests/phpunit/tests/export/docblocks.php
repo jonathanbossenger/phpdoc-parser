@@ -142,4 +142,28 @@ class Export_Docblocks extends Export_UnitTestCase {
 			, array( 'description' => 'This is a docblock for a class property.' )
 		);
 	}
+
+	/**
+	 * Test that `@see` tags are exported correctly.
+	 */
+	function test_method_see() {
+		$this->assertMethodHasDocs(
+			'Test_Class'
+			, 'test_method_see'
+			, array(
+				'tags' => array(
+					array(
+						'name' => 'see',
+						'refers' => 'self::test_method_typed_hash()',
+						'content' => '',
+					),
+					array(
+						'name' => 'see',
+						'refers' => 'https://wordpressfoundation.org/',
+						'content' => 'The WordPress Foundation.',
+					),
+				),
+			)
+		);
+	}
 }

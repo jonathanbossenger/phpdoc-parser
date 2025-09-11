@@ -444,13 +444,13 @@ function export_parse_tag( $tag_name, $value ) {
 		// @see can have a URL or reference
 		if ( preg_match( '#^(https?://\S+)\s*(.*)$#i', $value, $matches ) ) {
 			$result = array(
-				'content' => $matches[1],
-				'refers' => $matches[2],
+				'refers' => $matches[1],
+				'content' => $matches[2],
 			);
 		} elseif ( preg_match( '/^(\S+)\s*(.*)$/', $value, $matches ) ) {
 			$result = array(
-				'content' => $matches[1],
-				'refers' => $matches[2],
+				'refers' => $matches[1],
+				'content' => $matches[2],
 			);
 		} else {
 			$result = array(
@@ -458,10 +458,6 @@ function export_parse_tag( $tag_name, $value ) {
 				'refers' => $value,
 			);
 		}
-		$result = array(
-			'content' => '',
-			'refers' => $value,
-		);
 	}
 
 	foreach ( array( 'content', 'description' ) as $field ) {
