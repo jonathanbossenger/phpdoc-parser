@@ -360,7 +360,7 @@ function export_docblock_from_data( $docblock_data ) {
 	$long_description = $docblock_data['description'] ?? '';
 
 	if ( $long_description ) {
-		$long_description = '<p>' . format_description( $long_description ) . '</p>';
+		$long_description = format_description( $long_description, false );
 	}
 
 	return array(
@@ -462,7 +462,8 @@ function export_parse_tag( $tag_name, $value ) {
 
 	foreach ( array( 'content', 'description' ) as $field ) {
 		if ( ! empty( $result[ $field ] ) ) {
-			$result[ $field ] = format_description( $result[ $field ] );
+			$result[ $field ] = format_description( $result[ $field ], false ); // NOT inline only, as it needs to parse lists.
+			$result[ $field ] = preg_replace( '/<p>(.*?)<\/p>/s', '$1', $result[ $field ] ); // Remove surrounding <p> tags.
 		}
 	}
 
@@ -473,20 +474,20 @@ function export_parse_tag( $tag_name, $value ) {
  * Format the given description with Markdown.
  *
  * @param string $description Description.
+ * @param bool   $inline_only If true, only parse inline Markdown (no paragraphs, lists, etc).
  * @return string Description as Markdown if the Parsedown class exists, otherwise return
  *                the given description text.
  */
-function format_description( $description ) {
+function format_description( $description, $inline_only = false ) {
 	if ( class_exists( 'Parsedown' ) ) {
 		$parsedown   = \Parsedown::instance();
-		$description = $parsedown->line( $description );
+		$description = $inline_only ? $parsedown->line( $description ) : $parsedown->text( $description );
 	}
 
 	$description = fix_newlines( $description );
 
 	return $description;
 }
-
 /**
  * Fixes newline handling in parsed text.
  *
