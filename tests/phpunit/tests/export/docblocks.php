@@ -220,5 +220,10 @@ class Export_Docblocks extends Export_UnitTestCase {
 		$this->assertStringContainsString( '<code>code</code>', $description );
 		$this->assertStringContainsString( '<em>italics</em>', $description );
 		$this->assertStringContainsString( '<strong>bold</strong>', $description );
+		$this->assertStringContainsString( '<li>List Item 1</li>', $description );
+		$this->assertStringContainsString( '<li>List Item 2</li>', $description );
+		$this->assertStringContainsString( '<pre><code>foo();', $description );
+		$this->assertStringContainsString( '<blockquote>', $description );
+		$this->assertStringContainsString( '<h2>Inline Formatting includes Headings.</h2>', $description );
 	}
 }

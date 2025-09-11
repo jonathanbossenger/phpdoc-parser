@@ -80,6 +80,10 @@ class Test_Class {
 	 *
 	 *    @type int $time The current epoch.
 	 *    @type ?string $nullable_string A nullable string.
+	 *    @type string|array List of items:
+	 *                       - 'item1'
+	 *                       - 'item2'
+	 *                       Default is 'item1'.
 	 * }
 	 * @param WP_Post|WP_User $post_or_user A Post or User.
 	 * @param ( WP_Post | null ) $nullable_post A Nullable post.
@@ -121,12 +125,6 @@ do_action_ref_array( 'test_ref_array_action', array( &$var ) );
 
 /**
  * This method has all kinds of _"markdown formatting"_, many of which are not supported.
- *
- * Items that do NOT get parsed include:
- * 1. Lists
- * 2. Indented code blocks
- * 3. Blockquotes
- * 4. Headings.
  *
  * Example `code`:
  *
