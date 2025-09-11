@@ -29,7 +29,8 @@ function test_func( $var, $num ) {
 }
 
 /**
- * This is a class docblock.
+ * This is a class docblock, the summary of the class is
+ * spread over multiple lines.
  *
  * This is the more wordy description: This is a comment with two *'s at the start,
  * which means that it is a doc comment. Docblock comments are comment blocks used

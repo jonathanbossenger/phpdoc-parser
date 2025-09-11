@@ -115,7 +115,7 @@ class Export_Docblocks extends Export_UnitTestCase {
 
 		$this->assertClassHasDocs(
 			'Test_Class'
-			, array( 'description' => 'This is a class docblock.' )
+			, array( 'description' => 'This is a class docblock, the summary of the class is spread over multiple lines.' )
 		);
 	}
 
