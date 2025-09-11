@@ -118,3 +118,34 @@ do_action( 'undocumented_hook' );
  * A reference array action.
  */
 do_action_ref_array( 'test_ref_array_action', array( &$var ) );
+
+/**
+ * This method has all kinds of _"markdown formatting"_, many of which are not supported.
+ *
+ * Items that do NOT get parsed include:
+ * 1. Lists
+ * 2. Indented code blocks
+ * 3. Blockquotes
+ * 4. Headings.
+ *
+ * Example `code`:
+ *
+ *     foo();
+ *     bar();
+ *
+ * Lists:
+ * - Item 1
+ * - Item 2
+ *
+ * This is a quote:
+ *
+ * > Quoted Content.
+ * > On multiple lines.
+ *
+ * ## Inline Formatting includes Headings.
+ *
+ * There's also _italics_ and **bold**.
+ */
+function test_markdown_in_description() {
+
+}

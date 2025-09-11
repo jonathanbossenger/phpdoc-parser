@@ -355,12 +355,12 @@ function export_docblock_from_data( $docblock_data ) {
 
 	// Format descriptions according to legacy expectations:
 	// - description (summary) should be plain text
-	// - long_description should be wrapped in HTML paragraphs with linebreaks removed. TODO: Convert with markdown, ` and >.
+	// - long_description should be wrapped in HTML paragraphs with markdown applied.
 	$description = $docblock_data['summary'] ?? '';
 	$long_description = $docblock_data['description'] ?? '';
 
 	if ( $long_description ) {
-		$long_description = apply_markup( $long_description );
+		$long_description = '<p>' . format_description( $long_description ) . '</p>';
 	}
 
 	return array(
@@ -461,8 +461,8 @@ function export_parse_tag( $tag_name, $value ) {
 	}
 
 	foreach ( array( 'content', 'description' ) as $field ) {
-		if ( isset( $result[ $field ] ) ) {
-			$result[ $field ] = apply_markup( $result[ $field ], false );
+		if ( ! empty( $result[ $field ] ) ) {
+			$result[ $field ] = format_description( $result[ $field ] );
 		}
 	}
 
@@ -470,75 +470,74 @@ function export_parse_tag( $tag_name, $value ) {
 }
 
 /**
- * Apply simple markup to a string for legacy long_description.
+ * Format the given description with Markdown.
  *
- * Marks up `code` and >quoted text along with paragraphs.
- *
- * TODO: This should be the markdown parser, but AI coded this up pretty quickly.
- *
- * @param string $string Input string.
- * @return string Marked up string.
+ * @param string $description Description.
+ * @return string Description as Markdown if the Parsedown class exists, otherwise return
+ *                the given description text.
  */
-function apply_markup( $string, $paragraphs = true ) {
-	if ( ! $string ) {
-		return '';
+function format_description( $description ) {
+	if ( class_exists( 'Parsedown' ) ) {
+		$parsedown   = \Parsedown::instance();
+		$description = $parsedown->line( $description );
 	}
 
-	// HTML Entities
-	$string = htmlspecialchars( $string, ENT_SUBSTITUTE, 'UTF-8' );
+	$description = fix_newlines( $description );
 
-	// Convert `code` to <code>code</code>
-	$string = preg_replace_callback(
-		'/`([^`]+?)`/',
-		static function( $matches ) {
-			$code_content = html_entity_decode( $matches[1], ENT_SUBSTITUTE, 'UTF-8' );
-			return '<code>' . $code_content . '</code>';
+	return $description;
+}
+
+/**
+ * Fixes newline handling in parsed text.
+ *
+ * DocBlock lines, particularly for descriptions, generally adhere to a given character width. For sentences and
+ * paragraphs that exceed that width, what is intended as a manual soft wrap (via line break) is used to ensure
+ * on-screen/in-file legibility of that text. These line breaks are retained by phpDocumentor. However, consumers
+ * of this parsed data may believe the line breaks to be intentional and may display the text as such.
+ *
+ * This function fixes text by merging consecutive lines of text into a single line. A special exception is made
+ * for text appearing in `<code>` and `<pre>` tags, as newlines appearing in those tags are always intentional.
+ *
+ * @param string $text
+ *
+ * @return string
+ */
+function fix_newlines( $text ) {
+	// Non-naturally occurring string to use as temporary replacement.
+	$replacement_string = '{{{{{}}}}}';
+
+	// Replace newline characters within 'code' and 'pre' tags with replacement string.
+	$text = preg_replace_callback(
+		"/(<pre><code[^>]*>)(.+)(?=<\/code><\/pre>)/sU",
+		function ( $matches ) use ( $replacement_string ) {
+			return preg_replace( '/[\n\r]/', $replacement_string, $matches[1] . $matches[2] );
 		},
-		$string
+		$text
 	);
 
-	// Italics
-	$string = preg_replace( '/\b_([^_]+?)_\b/', '<em>$1</em>', $string );
+	// Insert a newline when \n follows `.`.
+	$text = preg_replace(
+		"/\.[\n\r]+(?!\s*[\n\r])/m",
+		'.<br>',
+		$text
+	);
 
-	// Bold
-	$string = preg_replace( '/\b\*([^\*]+?)\*\b/', '<strong>$1</strong>', $string );
+	// Insert a new line when \n is followed by what appears to be a list.
+	$text = preg_replace(
+		"/[\n\r]+(\s+[*-] )(?!\s*[\n\r])/m",
+		'<br>$1',
+		$text
+	);
 
-	// Convert >quoted text to <blockquote>quoted text</blockquote>
-	$string = preg_replace( '/^(>|&gt;)\s*(.+)/m', '<blockquote>$2</blockquote>', $string );
-	$string = preg_replace( '#</blockquote>(\s*)<blockquote>#', '$1', $string ); // Merge adjacent blockquotes
+	// Merge consecutive non-blank lines together by replacing the newlines with a space.
+	$text = preg_replace(
+		"/[\n\r](?!\s*[\n\r])/m",
+		' ',
+		$text
+	);
 
-	// Headings
-	$string = preg_replace( '/^######\s*(.+)$/m', '<h6>$1</h6>', $string );
-	$string = preg_replace( '/^#####\s*(.+)$/m', '<h5>$1</h5>', $string );
-	$string = preg_replace( '/^####\s*(.+)$/m', '<h4>$1</h4>', $string );
-	$string = preg_replace( '/^###\s*(.+)$/m', '<h3>$1</h3>', $string );
-	$string = preg_replace( '/^##\s*(.+)$/m', '<h2>$1</h2>', $string );
-	$string = preg_replace( '/^#\s*(.+)$/m', '<h1>$1</h1>', $string );
+	// Restore newline characters into code blocks.
+	$text = str_replace( $replacement_string, "\n", $text );
 
-	// Lists.
-	$string = preg_replace( '/^\s*[\*\-\+]\s+(.+)$/m', '<li>$1</li>', $string );
-	$string = preg_replace( '/(<li>.*<\/li>)/sU', '<ul>$1</ul>', $string );
-	$string = preg_replace( '/<\/ul>\s*<ul>/', '', $string ); // Merge adjacent lists
-
-	// Convert blocks to paragraps.
-	$string = str_replace( "\n\n", "\nPARAGRAPHBREAKHERE", $string );
-	$string = str_replace( "\n", ' ', $string );
-	$string = str_replace( 'PARAGRAPHBREAKHERE', "\n", $string );
-
-	// Wrap paragraphs in <p> tags
-	if ( $paragraphs ) {
-		$paragraphs = explode( "\n", trim( $string ) );
-		$paragraphs = array_map( 'trim', $paragraphs );
-		$paragraphs = array_filter( $paragraphs ); // Remove empty paragraphs
-		$paragraphs = array_map( function( $p ) {
-			if ( str_starts_with( $p, '<blockquote>' ) && str_ends_with( $p, '</blockquote>' ) ) {
-				// Paragraph goes inside the block quote. Probably an error.
-				return str_replace( array( '<blockquote>', '</blockquote>' ), array( '<blockquote><p>', '</p></blockquote>' ), $p );
-			}
-			return '<p>' . $p . '</p>';
-		}, $paragraphs );
-		$string = implode( ' ', $paragraphs );
-	}
-
-	return $string;
+	return $text;
 }

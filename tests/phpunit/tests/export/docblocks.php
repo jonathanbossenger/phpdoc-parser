@@ -181,7 +181,7 @@ class Export_Docblocks extends Export_UnitTestCase {
 						'types' => array( 'array' ),
 						'variable' => '$hashed_array',
 						// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
-						'content' => '{    The parameters for this function.  @type int $time The current epoch.  @type ?string $nullable_string A nullable string. }',
+						'content' => '{    The parameters for this function.<br> @type int $time The current epoch.<br> @type ?string $nullable_string A nullable string.<br>}',
 					),
 					array(
 						'name' => 'param',
@@ -209,6 +209,16 @@ class Export_Docblocks extends Export_UnitTestCase {
 				)
 			)
 		);
+	}
 
+	/**
+	 * Test that markdown in descriptions are marked up.
+	 */
+	function test_markdown_in_description() {
+		$description = $this->export_data['functions'][1]['doc']['long_description'];
+
+		$this->assertStringContainsString( '<code>code</code>', $description );
+		$this->assertStringContainsString( '<em>italics</em>', $description );
+		$this->assertStringContainsString( '<strong>bold</strong>', $description );
 	}
 }
