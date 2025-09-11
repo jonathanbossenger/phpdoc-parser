@@ -166,4 +166,49 @@ class Export_Docblocks extends Export_UnitTestCase {
 			)
 		);
 	}
+
+	/**
+	 * Test the many types of typed parameters we can expect.
+	 */
+	public function test_method_typed_hash() {
+		$this->assertMethodHasDocs(
+			'Test_Class'
+			, 'test_method_typed_hash'
+			, array(
+				'tags' => array(
+					array(
+						'name' => 'param',
+						'types' => array( 'array' ),
+						'variable' => '$hashed_array',
+						// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
+						'content' => '{    The parameters for this function.  @type int $time The current epoch.  @type ?string $nullable_string A nullable string. }',
+					),
+					array(
+						'name' => 'param',
+						'types' => array( 'WP_Post', 'WP_User' ),
+						'variable' => '$post_or_user',
+						'content' => 'A Post or User.',
+					),
+					array(
+						'name' => 'param',
+						'types' => array( 'WP_Post', 'null' ),
+						'variable' => '$nullable_post',
+						'content' => 'A Nullable post.',
+					),
+					array(
+						'name' => 'param',
+						'types' => array( '?string' ),
+						'variable' => '$nullable_string',
+						'content' => 'A nullable string.',
+					),
+					array(
+						'name' => 'return',
+						'content' => 'An empty array.',
+						'types' => array( 'array' ),
+					),
+				)
+			)
+		);
+
+	}
 }

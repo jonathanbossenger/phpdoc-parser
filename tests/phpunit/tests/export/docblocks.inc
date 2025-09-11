@@ -69,8 +69,27 @@ class Test_Class {
 	 * @see self::test_method_typed_hash()
 	 * @see https://wordpressfoundation.org/ The WordPress Foundation.
 	 */
-	 function test_method_see() {
-	 }
+	public function test_method_see() {
+	}
+
+	/**
+	 * This is a method that has a param with multiple types within.
+	 *
+	 * @param array $hashed_array {
+	 *    The parameters for this function.
+	 *
+	 *    @type int $time The current epoch.
+	 *    @type ?string $nullable_string A nullable string.
+	 * }
+	 * @param WP_Post|WP_User $post_or_user A Post or User.
+	 * @param ( WP_Post | null ) $nullable_post A Nullable post.
+	 * @param ?string $nullable_string A nullable string.
+	 * 
+	 * @return array An empty array.
+	 */
+	public function test_method_typed_hash( array $hashed_array, $post_or_user, ?WP_Post $nullable_post ): array {
+		return [];
+	}
 
 }
 

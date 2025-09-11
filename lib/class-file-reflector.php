@@ -588,7 +588,21 @@ class File_Reflector extends NodeVisitorAbstract {
 		// Extract tags
 		foreach ( $phpdoc_node->getTags() as $tag ) {
 			$tag_name = ltrim( $tag->name, '@' );
-			$docblock_data['tags'][ $tag_name ][] = $tag->value ? (string) $tag->value : '';
+			$value    = $tag->value ? (string) $tag->value : '';
+
+			// Some back-compat needs to happen here for @params with @type, temporarily.
+			// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
+			if ( 'type' === $tag_name ) {
+				// Don't append this to the stack, add it into the previous @param.
+				$last_param_index = count( $docblock_data['tags']['param'] ?? array() ) - 1;
+
+				if ( $last_param_index >= 0) {
+					$docblock_data['tags']['param'][ $last_param_index ] .= "\n @{$tag_name} {$value}";
+					continue;
+				}
+			}
+
+			$docblock_data['tags'][ $tag_name ][] = $value;
 		}
 
 		return $docblock_data;
