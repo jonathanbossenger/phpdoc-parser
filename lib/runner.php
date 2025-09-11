@@ -485,13 +485,13 @@ function apply_markup( $string, $paragraphs = true ) {
 	}
 
 	// HTML Entities
-	$string = htmlspecialchars( $string, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
+	$string = htmlspecialchars( $string, ENT_SUBSTITUTE, 'UTF-8' );
 
 	// Convert `code` to <code>code</code>
 	$string = preg_replace_callback(
 		'/`([^`]+?)`/',
 		static function( $matches ) {
-			$code_content = html_entity_decode( $matches[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
+			$code_content = html_entity_decode( $matches[1], ENT_SUBSTITUTE, 'UTF-8' );
 			return '<code>' . $code_content . '</code>';
 		},
 		$string
