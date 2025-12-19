@@ -181,7 +181,7 @@ class Export_Docblocks extends Export_UnitTestCase {
 						'types' => array( 'array' ),
 						'variable' => '$hashed_array',
 						// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
-						'content' => '{    The parameters for this function.<br> @type int $time The current epoch.<br> @type ?string $nullable_string A nullable string.<br>}',
+						'content' => '{ The parameters for this function.<br>@type int $time The current epoch.<br>@type ?string $nullable_string A nullable string.<br>@type string|array List of items: <ul> <li>\'item1\'</li> <li>\'item2\' Default is \'item1\'.<br>}</li> </ul>',
 					),
 					array(
 						'name' => 'param',
@@ -220,8 +220,8 @@ class Export_Docblocks extends Export_UnitTestCase {
 		$this->assertStringContainsString( '<code>code</code>', $description );
 		$this->assertStringContainsString( '<em>italics</em>', $description );
 		$this->assertStringContainsString( '<strong>bold</strong>', $description );
-		$this->assertStringContainsString( '<li>List Item 1</li>', $description );
-		$this->assertStringContainsString( '<li>List Item 2</li>', $description );
+		$this->assertStringContainsString( '<li>Item 1</li>', $description );
+		$this->assertStringContainsString( '<li>Item 2</li>', $description );
 		$this->assertStringContainsString( '<pre><code>foo();', $description );
 		$this->assertStringContainsString( '<blockquote>', $description );
 		$this->assertStringContainsString( '<h2>Inline Formatting includes Headings.</h2>', $description );
