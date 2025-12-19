@@ -62,7 +62,10 @@ function parse_files( $files, $root ) {
 
 		// Add file-level uses (hooks, functions, methods)
 		if ( ! empty( $parsed_data['uses'] ) ) {
-			$out['uses'] = export_uses( $parsed_data['uses'] );
+			$uses = export_uses( $parsed_data['uses'] );
+			if ( $uses ) {
+				$out['uses'] = $uses;
+			}
 		}
 
 		// Convert hooks to legacy format
@@ -76,7 +79,8 @@ function parse_files( $files, $root ) {
 			foreach ( $parsed_data['functions'] as $function ) {
 				$func = array(
 					'name' => $function['name'],
-					'namespace' => $function['namespace'],
+					'namespace' => $function['namespace'] ?? 'global',
+					'aliases' => array(),
 					'line' => $function['line'],
 					'end_line' => $function['end_line'],
 					'arguments' => export_arguments( $function['parameters'] ?? array() ),
@@ -104,7 +108,7 @@ function parse_files( $files, $root ) {
 			foreach ( $parsed_data['classes'] as $class ) {
 				$class_data = array(
 					'name' => $class['name'],
-					'namespace' => $class['namespace'],
+					'namespace' => $class['namespace'] ?? 'global',
 					'line' => $class['line'],
 					'end_line' => $class['end_line'],
 					'doc' => export_docblock_from_data( $class['docblock'] ),
@@ -251,7 +255,7 @@ function export_hook( $hook ) {
 	return array(
 		'name' => $hook->getName(),
 		'line' => $hook->getLine(),
-		'end_line' => $hook->getLine(),
+		'end_line' => $hook->getEndLine(),
 		'type' => $hook->getType(),
 		'arguments' => $hook->getArguments(),
 		'doc' => $doc,
@@ -268,7 +272,7 @@ function export_function_call( $function ) {
 	return array(
 		'name' => $function->getName(),
 		'line' => $function->getLine(),
-		'end_line' => $function->getLine(),
+		'end_line' => $function->getEndLine(),
 	);
 }
 
@@ -282,7 +286,7 @@ function export_method_call( $method ) {
 	$data = array(
 		'name' => $method->getName(),
 		'line' => $method->getLine(),
-		'end_line' => $method->getLine(),
+		'end_line' => $method->getEndLine(),
 		'static' => $method->isStatic(),
 	);
 
@@ -339,7 +343,7 @@ function export_docblock_from_data( $docblock_data ) {
 				);
 
 				// Parse @param and @return tags to extract types and variables
-				if ( in_array( $tag_name, array( 'param', 'return' ), true ) ) {
+				if ( in_array( $tag_name, array( 'param', 'var', 'type', 'return', 'since', 'see' ), true ) ) {
 					$parsed_tag = export_parse_tag( $tag_name, $value );
 					$tag_data = array_merge( $tag_data, $parsed_tag );
 				}
@@ -351,16 +355,12 @@ function export_docblock_from_data( $docblock_data ) {
 
 	// Format descriptions according to legacy expectations:
 	// - description (summary) should be plain text
-	// - long_description should be wrapped in HTML paragraphs with linebreaks removed
+	// - long_description should be wrapped in HTML paragraphs with markdown applied.
 	$description = $docblock_data['summary'] ?? '';
 	$long_description = $docblock_data['description'] ?? '';
 
 	if ( $long_description ) {
-		// Remove linebreaks and normalize whitespace
-		$long_description = preg_replace( '/\s+/', ' ', trim( $long_description ) );
-		if ( ! str_contains( $long_description, '<p>' ) ) {
-			$long_description = '<p>' . $long_description . '</p>';
-		}
+		$long_description = format_description( $long_description, false );
 	}
 
 	return array(
@@ -397,23 +397,148 @@ function export_docblock( $reflector ) {
 function export_parse_tag( $tag_name, $value ) {
 	$result = array();
 
-	if ( 'param' === $tag_name ) {
+	$regex_type = '([^(\s)]+|[(]\s*[^)]+\s*[)])'; // ( int | string ), int, etc
+	$type_parser = static function( $types ) {
+		$types = trim( $types, '() ' );
+		$types = explode( '|', $types );
+		$types = array_map( 'trim', $types );
+
+		return $types;
+	};
+
+	if ( 'param' === $tag_name || 'var' === $tag_name || 'type' === $tag_name ) {
 		// Parse @param type $variable description
-		if ( preg_match( '/^(\S+)\s+(\$\w+)\s+(.*)$/', $value, $matches ) ) {
-			$result['types'] = array( $matches[1] );
-			$result['variable'] = $matches[2];
-			$result['content'] = $matches[3];
-		} elseif ( preg_match( '/^(\S+)\s+(.*)$/', $value, $matches ) ) {
-			$result['types'] = array( $matches[1] );
-			$result['content'] = $matches[2];
+
+		if ( preg_match( '/^(?<types>' . $regex_type . ')\s+(?<variable>\$\w+)\s+(?<content>.*)$/s', $value, $matches ) ) {
+			$result['types'] = $type_parser( $matches['types'] );
+			$result['variable'] = $matches['variable'];
+			$result['content'] = $matches['content'];
+		} elseif ( preg_match( '/^(?<types>' . $regex_type . ')\s+(?<content>.*)$/s', $value, $matches ) ) {
+			$result['types'] = $type_parser( $matches['types'] );
+			$result['variable'] = '';
+			$result['content'] = $matches['content'];
+		} else {
+			$result['types'] = $type_parser( $value );
+			$result['variable'] = '';
+			$result['content'] = '';
 		}
 	} elseif ( 'return' === $tag_name ) {
 		// Parse @return type description
-		if ( preg_match( '/^(\S+)\s+(.*)$/', $value, $matches ) ) {
-			$result['types'] = array( $matches[1] );
-			$result['content'] = $matches[2];
+		if ( preg_match( '/^(?<types>' . $regex_type . ')\s+(?<content>.*)$/s', $value, $matches ) ) {
+			$result['types'] = $type_parser( $matches['types'] );
+			$result['content'] = $matches['content'];
+		} else {
+			$result['types'] = $type_parser( $value );
+			$result['content'] = '';
+		}
+	} elseif ( 'since' === $tag_name ) {
+		// @since has a description?
+		if ( preg_match( '/^([0-9.]+)\s+(.*)$/', $value, $matches ) ) {
+			$result['content'] = $matches[1];
+			$result['description'] = $matches[2];
+		} else {
+		// Unsure, some files seem to trigger this, others don't.
+		//	$result['description'] = $value;
+		}
+	} elseif ( 'see' === $tag_name ) {
+		// @see can have a URL or reference
+		if ( preg_match( '#^(https?://\S+)\s*(.*)$#i', $value, $matches ) ) {
+			$result = array(
+				'refers' => $matches[1],
+				'content' => $matches[2],
+			);
+		} elseif ( preg_match( '/^(\S+)\s*(.*)$/', $value, $matches ) ) {
+			$result = array(
+				'refers' => $matches[1],
+				'content' => $matches[2],
+			);
+		} else {
+			$result = array(
+				'content' => '',
+				'refers' => $value,
+			);
+		}
+	}
+
+	foreach ( array( 'content', 'description' ) as $field ) {
+		if ( ! empty( $result[ $field ] ) ) {
+			$result[ $field ] = format_description( $result[ $field ], false ); // NOT inline only, as it needs to parse lists.
+			$result[ $field ] = preg_replace( '/<p>(.*?)<\/p>/s', '$1', $result[ $field ] ); // Remove surrounding <p> tags.
 		}
 	}
 
 	return $result;
+}
+
+/**
+ * Format the given description with Markdown.
+ *
+ * @param string $description Description.
+ * @param bool   $inline_only If true, only parse inline Markdown (no paragraphs, lists, etc).
+ * @return string Description as Markdown if the Parsedown class exists, otherwise return
+ *                the given description text.
+ */
+function format_description( $description, $inline_only = false ) {
+	if ( class_exists( 'Parsedown' ) ) {
+		$parsedown   = \Parsedown::instance();
+		$description = $inline_only ? $parsedown->line( $description ) : $parsedown->text( $description );
+	}
+
+	$description = fix_newlines( $description );
+
+	return $description;
+}
+/**
+ * Fixes newline handling in parsed text.
+ *
+ * DocBlock lines, particularly for descriptions, generally adhere to a given character width. For sentences and
+ * paragraphs that exceed that width, what is intended as a manual soft wrap (via line break) is used to ensure
+ * on-screen/in-file legibility of that text. These line breaks are retained by phpDocumentor. However, consumers
+ * of this parsed data may believe the line breaks to be intentional and may display the text as such.
+ *
+ * This function fixes text by merging consecutive lines of text into a single line. A special exception is made
+ * for text appearing in `<code>` and `<pre>` tags, as newlines appearing in those tags are always intentional.
+ *
+ * @param string $text
+ *
+ * @return string
+ */
+function fix_newlines( $text ) {
+	// Non-naturally occurring string to use as temporary replacement.
+	$replacement_string = '{{{{{}}}}}';
+
+	// Replace newline characters within 'code' and 'pre' tags with replacement string.
+	$text = preg_replace_callback(
+		"/(<pre><code[^>]*>)(.+)(?=<\/code><\/pre>)/sU",
+		function ( $matches ) use ( $replacement_string ) {
+			return preg_replace( '/[\n\r]/', $replacement_string, $matches[1] . $matches[2] );
+		},
+		$text
+	);
+
+	// Insert a newline when \n follows `.`.
+	$text = preg_replace(
+		"/\.[\n\r]+(?!\s*[\n\r])/m",
+		'.<br>',
+		$text
+	);
+
+	// Insert a new line when \n is followed by what appears to be a list.
+	$text = preg_replace(
+		"/[\n\r]+(\s+[*-] )(?!\s*[\n\r])/m",
+		'<br>$1',
+		$text
+	);
+
+	// Merge consecutive non-blank lines together by replacing the newlines with a space.
+	$text = preg_replace(
+		"/[\n\r](?!\s*[\n\r])/m",
+		' ',
+		$text
+	);
+
+	// Restore newline characters into code blocks.
+	$text = str_replace( $replacement_string, "\n", $text );
+
+	return $text;
 }

@@ -93,6 +93,15 @@ class Hook_Reflector {
 	}
 
 	/**
+	 * Get the end line number of where the hook is defined.
+	 *
+	 * @return int End line number.
+	 */
+	public function getEndLine() {
+		return $this->node->getEndLine();
+	}
+
+	/**
 	 * Get the hook arguments.
 	 *
 	 * @return array List of hook arguments.
@@ -162,6 +171,7 @@ class Hook_Reflector {
 			'name' => $this->getName(),
 			'type' => $this->getType(),
 			'line' => $this->getLine(),
+			'end_line' => $this->getEndLine(),
 			'arguments' => $this->getArguments(),
 			'doc_comment' => $this->getDocComment(),
 		);

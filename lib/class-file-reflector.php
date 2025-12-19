@@ -572,18 +572,37 @@ class File_Reflector extends NodeVisitorAbstract {
 		}
 
 		// Split into summary and description
-		$text_lines = array_filter( explode( "\n", trim( $text_content ) ) );
+		$text_lines = explode( "\n", trim( $text_content ) );
 		if ( ! empty( $text_lines ) ) {
-			$docblock_data['summary'] = trim( $text_lines[0] );
-			if ( count( $text_lines ) > 1 ) {
-				$docblock_data['description'] = trim( implode( "\n", array_slice( $text_lines, 1 ) ) );
+			// Summary is the first lines before a blank line
+			$summary = '';
+			while ( ( $line = array_shift( $text_lines ) ) && $line ) {
+				$summary .= $line . ' ';
 			}
+			$docblock_data['summary'] = trim( $summary );
+
+			// The rest is the description.
+			$docblock_data['description'] = trim( implode( "\n", $text_lines ) );
 		}
 
 		// Extract tags
 		foreach ( $phpdoc_node->getTags() as $tag ) {
 			$tag_name = ltrim( $tag->name, '@' );
-			$docblock_data['tags'][ $tag_name ][] = $tag->value ? (string) $tag->value : '';
+			$value    = $tag->value ? (string) $tag->value : '';
+
+			// Some back-compat needs to happen here for @params with @type, temporarily.
+			// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
+			if ( 'type' === $tag_name ) {
+				// Don't append this to the stack, add it into the previous @param.
+				$last_param_index = count( $docblock_data['tags']['param'] ?? array() ) - 1;
+
+				if ( $last_param_index >= 0) {
+					$docblock_data['tags']['param'][ $last_param_index ] .= "\n @{$tag_name} {$value}";
+					continue;
+				}
+			}
+
+			$docblock_data['tags'][ $tag_name ][] = $value;
 		}
 
 		return $docblock_data;
