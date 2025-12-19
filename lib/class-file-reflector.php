@@ -590,14 +590,20 @@ class File_Reflector extends NodeVisitorAbstract {
 			$tag_name = ltrim( $tag->name, '@' );
 			$value    = $tag->value ? (string) $tag->value : '';
 
-			// Some back-compat needs to happen here for @params with @type, temporarily.
+			// Append @type tags to the previous @return or @param tag, not as separate tags.
 			// @see https://github.com/WordPress/wporg-developer/blob/bcb196110099a2cd898230834022b6237917e793/source/wp-content/themes/wporg-developer-2023/inc/formatting.php#L598-L680
 			if ( 'type' === $tag_name ) {
-				// Don't append this to the stack, add it into the previous @param.
-				$last_param_index = count( $docblock_data['tags']['param'] ?? array() ) - 1;
+				// Check @return first (since it comes after @param in docblocks)
+				$last_return_index = count( $docblock_data['tags']['return'] ?? array() ) - 1;
+				if ( $last_return_index >= 0 ) {
+					$docblock_data['tags']['return'][ $last_return_index ] .= "\n@{$tag_name} {$value}";
+					continue;
+				}
 
-				if ( $last_param_index >= 0) {
-					$docblock_data['tags']['param'][ $last_param_index ] .= "\n @{$tag_name} {$value}";
+				// Fall back to @param
+				$last_param_index = count( $docblock_data['tags']['param'] ?? array() ) - 1;
+				if ( $last_param_index >= 0 ) {
+					$docblock_data['tags']['param'][ $last_param_index ] .= "\n@{$tag_name} {$value}";
 					continue;
 				}
 			}
