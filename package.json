@@ -4,6 +4,7 @@
   "description": "WP-Parser is the parser for creating the new code reference at [developer.wordpress.org](https://developer.wordpress.org/reference). It parses the inline documentation and produces custom post type entries in WordPress.",
   "scripts": {
     "wp-env": "wp-env",
+    "export": "wp-env run cli wp parser export /var/www/html/ /var/www/html/wp-content/plugins/phpdoc-parser/export.json",
     "test": "npm-run-all test:phpunit",
     "setup": "npm-run-all start composer:setup",
     "start": "wp-env start",

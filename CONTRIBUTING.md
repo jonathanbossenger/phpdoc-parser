@@ -15,6 +15,12 @@ npm run setup  # First time only
 npm run test   # Run tests
 ```
 
+To run the full export to JSON using the WordPress core files in the wp-env container:
+
+```
+npm run export
+```
+
 ## Stop containers when done
 
 ```
