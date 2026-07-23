@@ -13,6 +13,11 @@ use phpDocumentor\Reflection\FileReflector;
  */
 class File_Reflector extends FileReflector {
 	/**
+	 * Attribute key used to store queued uses on PHP-Parser nodes.
+	 */
+	const USES_ATTRIBUTE = 'wp_parser_uses';
+
+	/**
 	 * List of elements used in global scope in this file, indexed by element type.
 	 *
 	 * @var array {
@@ -40,7 +45,7 @@ class File_Reflector extends FileReflector {
 	/**
 	 * Last DocBlock associated with a non-documentable element.
 	 *
-	 * @var \PHPParser_Comment_Doc
+	 * @var \PhpParser\Comment\Doc
 	 */
 	protected $last_doc = null;
 
@@ -61,9 +66,9 @@ class File_Reflector extends FileReflector {
 	 * Finally, we pick up any docblocks for nodes that usually aren't documentable,
 	 * so they can be assigned to the hooks to which they may belong.
 	 *
-	 * @param \PHPParser_Node $node
+	 * @param \PhpParser\Node $node
 	 */
-	public function enterNode( \PHPParser_Node $node ) {
+	public function enterNode( \PhpParser\Node $node ) {
 		parent::enterNode( $node );
 
 		switch ( $node->getType() ) {
@@ -79,7 +84,7 @@ class File_Reflector extends FileReflector {
 				$function = new Function_Call_Reflector( $node, $this->context );
 
 				// Add the call to the list of functions used in this scope.
-				$this->getLocation()->uses['functions'][] = $function;
+				$this->add_use( 'functions', $function );
 
 				if ( $this->isFilter( $node ) ) {
 					if ( $this->last_doc && ! $node->getDocComment() ) {
@@ -90,7 +95,7 @@ class File_Reflector extends FileReflector {
 					$hook = new Hook_Reflector( $node, $this->context );
 
 					// Add it to the list of hooks used in this scope.
-					$this->getLocation()->uses['hooks'][] = $hook;
+					$this->add_use( 'hooks', $hook );
 				}
 				break;
 
@@ -99,7 +104,7 @@ class File_Reflector extends FileReflector {
 				$method = new Method_Call_Reflector( $node, $this->context );
 
 				// Add it to the list of methods used in this scope.
-				$this->getLocation()->uses['methods'][] = $method;
+				$this->add_use( 'methods', $method );
 				break;
 
 			// Parse out method calls, so we can export where methods are used.
@@ -107,7 +112,7 @@ class File_Reflector extends FileReflector {
 				$method = new Static_Method_Call_Reflector( $node, $this->context );
 
 				// Add it to the list of methods used in this scope.
-				$this->getLocation()->uses['methods'][] = $method;
+				$this->add_use( 'methods', $method );
 				break;
 
 			// Parse out `new Class()` calls as uses of Class::__construct().
@@ -115,7 +120,7 @@ class File_Reflector extends FileReflector {
 				$method = new \WP_Parser\Method_Call_Reflector( $node, $this->context );
 
 				// Add it to the list of methods used in this scope.
-				$this->getLocation()->uses['methods'][] = $method;
+				$this->add_use( 'methods', $method );
 				break;
 		}
 
@@ -126,7 +131,11 @@ class File_Reflector extends FileReflector {
 		// we don't ignore them, we'll end up picking up docblocks that are already
 		// associated with a named element, and so aren't really from a non-
 		// documentable element after all.
-		if ( ! $this->isNodeDocumentable( $node ) && 'Name' !== $node->getType() && ( $docblock = $node->getDocComment() ) ) {
+		if (
+			! $this->isNodeDocumentable( $node )
+			&& 'Name' !== $node->getType()
+			&& 'Name_FullyQualified' !== $node->getType()
+			&& ( $docblock = $node->getDocComment() ) ) {
 			$this->last_doc = $docblock;
 		}
 	}
@@ -137,9 +146,9 @@ class File_Reflector extends FileReflector {
 	 * We can now access the function/method reflectors, so we can assign any queued
 	 * hooks to them. The reflector for a node isn't created until the node is left.
 	 *
-	 * @param \PHPParser_Node $node
+	 * @param \PhpParser\Node $node
 	 */
-	public function leaveNode( \PHPParser_Node $node ) {
+	public function leaveNode( \PhpParser\Node $node ) {
 
 		parent::leaveNode( $node );
 
@@ -149,19 +158,20 @@ class File_Reflector extends FileReflector {
 				if ( ! empty( $this->method_uses_queue ) ) {
 					/** @var Reflection\ClassReflector\MethodReflector $method */
 					foreach ( $class->getMethods() as $method ) {
-						if ( isset( $this->method_uses_queue[ $method->getName() ] ) ) {
-							if ( isset( $this->method_uses_queue[ $method->getName() ]['methods'] ) ) {
+						$method_name = $method->getName();
+						if ( isset( $this->method_uses_queue[ $method_name ] ) ) {
+							if ( isset( $this->method_uses_queue[ $method_name ]['methods'] ) ) {
 								/*
 								 * For methods used in a class, set the class on the method call.
 								 * That allows us to later get the correct class name for $this, self, parent.
 								 */
-								foreach ( $this->method_uses_queue[ $method->getName() ]['methods'] as $method_call ) {
+								foreach ( $this->method_uses_queue[ $method_name ]['methods'] as $method_call ) {
 									/** @var Method_Call_Reflector $method_call */
 									$method_call->set_class( $class );
 								}
 							}
 
-							$method->uses = $this->method_uses_queue[ $method->getName() ];
+							$method->uses = $this->method_uses_queue[ $method_name ];
 						}
 					}
 				}
@@ -172,8 +182,9 @@ class File_Reflector extends FileReflector {
 
 			case 'Stmt_Function':
 				$function = array_pop( $this->location );
-				if ( isset( $function->uses ) && ! empty( $function->uses ) ) {
-					end( $this->functions )->uses = $function->uses;
+				$uses     = $this->get_node_uses( $function );
+				if ( ! empty( $uses ) ) {
+					end( $this->functions )->uses = $uses;
 				}
 				break;
 
@@ -184,21 +195,24 @@ class File_Reflector extends FileReflector {
 				 * Store the list of elements used by this method in the queue. We'll
 				 * assign them to the method upon leaving the class (see above).
 				 */
-				if ( ! empty( $method->uses ) ) {
-					$this->method_uses_queue[ $method->name ] = $method->uses;
+				$uses = $this->get_node_uses( $method );
+				if ( ! empty( $uses ) ) {
+					$this->method_uses_queue[ (string) $method->name ] = $uses;
 				}
 				break;
 		}
 	}
 
 	/**
-	 * @param \PHPParser_Node $node
+	 * @param \PhpParser\Node $node
 	 *
 	 * @return bool
 	 */
-	protected function isFilter( \PHPParser_Node $node ) {
-		// Ignore variable functions
-		if ( 'Name' !== $node->name->getType() ) {
+	protected function isFilter( \PhpParser\Node $node ) {
+		if (
+			'Name' !== $node->name->getType() &&
+			'Name_FullyQualified' !== $node->name->getType()
+		) {
 			return false;
 		}
 
@@ -224,13 +238,53 @@ class File_Reflector extends FileReflector {
 	}
 
 	/**
-	 * @param \PHPParser_Node $node
+	 * Add a used element to the current parser scope.
+	 *
+	 * File-scope uses are stored on this reflector, while function and method
+	 * scope uses are stored as PHP-Parser node attributes until matching
+	 * reflectors are available.
+	 *
+	 * @param string $type
+	 * @param object $reflector
+	 */
+	protected function add_use( $type, $reflector ) {
+		$location = $this->getLocation();
+
+		if ( $location instanceof self ) {
+			$this->uses[ $type ][] = $reflector;
+			return;
+		}
+
+		$uses            = $this->get_node_uses( $location );
+		$uses[ $type ][] = $reflector;
+		$location->setAttribute( self::USES_ATTRIBUTE, $uses );
+	}
+
+	/**
+	 * Get queued uses from a PHP-Parser node.
+	 *
+	 * @param \PhpParser\Node $node
+	 *
+	 * @return array
+	 */
+	protected function get_node_uses( \PhpParser\Node $node ) {
+		$uses = $node->getAttribute( self::USES_ATTRIBUTE, array() );
+
+		return is_array( $uses ) ? $uses : array();
+	}
+
+	/**
+	 * @param \PhpParser\Node $node
 	 *
 	 * @return bool
 	 */
-	protected function isNodeDocumentable( \PHPParser_Node $node ) {
+	protected function isNodeDocumentable( \PhpParser\Node $node ) {
+		if ( $node instanceof \PhpParser\Node\Stmt\Expression ) {
+			$node = $node->expr;
+		}
+
 		return parent::isNodeDocumentable( $node )
-		|| ( $node instanceof \PHPParser_Node_Expr_FuncCall
+		|| ( $node instanceof \PhpParser\Node\Expr\FuncCall
 			&& $this->isFilter( $node ) );
 	}
 }

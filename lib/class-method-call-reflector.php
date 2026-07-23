@@ -32,23 +32,27 @@ class Method_Call_Reflector extends BaseReflector {
 			$caller = $this->node->var;
 		}
 
-		if ( $caller instanceof \PHPParser_Node_Expr ) {
+		if ( $caller instanceof \PhpParser\Node\Expr ) {
 			$printer = new Pretty_Printer;
 			$caller = $printer->prettyPrintExpr( $caller );
-		} elseif ( $caller instanceof \PHPParser_Node_Name_FullyQualified ) {
+		} elseif ( $caller instanceof \PhpParser\Node\Name\FullyQualified ) {
 			$caller = '\\' . $caller->toString();
-		} elseif ( $caller instanceof \PHPParser_Node_Name ) {
+		} elseif ( $caller instanceof \PhpParser\Node\Name ) {
 			$caller = $caller->toString();
+		} elseif ( $caller instanceof \PhpParser\Node\Stmt\Class_ ) {
+			$caller = $caller->isAnonymous()
+				? 'class@anonymous'
+				: $this->nameToString( $caller->name );
 		}
 
 		$caller = $this->_resolveName( $caller );
 
 		// If the caller is a function, convert it to the function name
-		if ( is_a( $caller, 'PHPParser_Node_Expr_FuncCall' ) ) {
+		if ( is_a( $caller, 'PhpParser\Node\Expr\FuncCall' ) ) {
 
 			// Add parentheses to signify this is a function call
-			/** @var \PHPParser_Node_Expr_FuncCall $caller */
-			$caller = implode( '\\', $caller->name->parts ) . '()';
+			/** @var \PhpParser\Node\Expr\FuncCall $caller */
+			$caller = $this->nameToString( $caller->name ) . '()';
 		}
 
 		$class_mapping = $this->_getClassMapping();
@@ -134,12 +138,11 @@ class Method_Call_Reflector extends BaseReflector {
 	 *
 	 * @return string The resolved class name.
 	 */
-	protected function _resolveName( $class ) {
+	protected function _resolveName( string $class ): string {
 
 		if ( ! $this->called_in_class ) {
 			return $class;
 		}
-
 
 		switch ( $class ) {
 			case '$this':

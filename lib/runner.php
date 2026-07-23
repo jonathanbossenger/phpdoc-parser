@@ -35,6 +35,8 @@ function get_wp_files( $directory ) {
 		);
 	}
 
+	sort( $files );
+
 	return $files;
 }
 
@@ -47,88 +49,119 @@ function get_wp_files( $directory ) {
 function parse_files( $files, $root ) {
 	$output = array();
 
-	foreach ( $files as $filename ) {
-		$file = new File_Reflector( $filename );
+	try {
+		foreach ( $files as $filename ) {
+			$file = new File_Reflector( $filename );
 
-		$path = ltrim( substr( $filename, strlen( $root ) ), DIRECTORY_SEPARATOR );
-		$file->setFilename( $path );
+			$path = ltrim( substr( $filename, strlen( $root ) ), DIRECTORY_SEPARATOR );
+			$file->setFilename( $path );
 
-		$file->process();
+			$file->process();
 
-		// TODO proper exporter
-		$out = array(
-			'file' => export_docblock( $file ),
-			'path' => str_replace( DIRECTORY_SEPARATOR, '/', $file->getFilename() ),
-			'root' => $root,
-		);
-
-		if ( ! empty( $file->uses ) ) {
-			$out['uses'] = export_uses( $file->uses );
-		}
-
-		foreach ( $file->getIncludes() as $include ) {
-			$out['includes'][] = array(
-				'name' => $include->getName(),
-				'line' => $include->getLineNumber(),
-				'type' => $include->getType(),
-			);
-		}
-
-		foreach ( $file->getConstants() as $constant ) {
-			$out['constants'][] = array(
-				'name'  => $constant->getShortName(),
-				'line'  => $constant->getLineNumber(),
-				'value' => $constant->getValue(),
-			);
-		}
-
-		if ( ! empty( $file->uses['hooks'] ) ) {
-			$out['hooks'] = export_hooks( $file->uses['hooks'] );
-		}
-
-		foreach ( $file->getFunctions() as $function ) {
-			$func = array(
-				'name'      => $function->getShortName(),
-				'namespace' => $function->getNamespace(),
-				'aliases'   => $function->getNamespaceAliases(),
-				'line'      => $function->getLineNumber(),
-				'end_line'  => $function->getNode()->getAttribute( 'endLine' ),
-				'arguments' => export_arguments( $function->getArguments() ),
-				'doc'       => export_docblock( $function ),
-				'hooks'     => array(),
+			// TODO proper exporter
+			$out = array(
+				'file' => export_docblock( $file ),
+				'path' => str_replace( DIRECTORY_SEPARATOR, '/', $file->getFilename() ),
+				'root' => $root,
 			);
 
-			if ( ! empty( $function->uses ) ) {
-				$func['uses'] = export_uses( $function->uses );
-
-				if ( ! empty( $function->uses['hooks'] ) ) {
-					$func['hooks'] = export_hooks( $function->uses['hooks'] );
-				}
+			if ( ! empty( $file->uses ) ) {
+				$out['uses'] = export_uses( $file->uses );
 			}
 
-			$out['functions'][] = $func;
+			foreach ( $file->getIncludes() as $include ) {
+				$out['includes'][] = array(
+					'name' => $include->getName(),
+					'line' => $include->getLineNumber(),
+					'type' => $include->getType(),
+				);
+			}
+
+			foreach ( $file->getConstants() as $constant ) {
+				$out['constants'][] = array(
+					'name'  => $constant->getShortName(),
+					'line'  => $constant->getLineNumber(),
+					'value' => $constant->getValue(),
+				);
+			}
+
+			if ( ! empty( $file->uses['hooks'] ) ) {
+				$out['hooks'] = export_hooks( $file->uses['hooks'] );
+			}
+
+			foreach ( $file->getFunctions() as $function ) {
+				$func = array(
+					'name'      => $function->getShortName(),
+					'namespace' => $function->getNamespace(),
+					'aliases'   => $function->getNamespaceAliases(),
+					'line'      => $function->getLineNumber(),
+					'end_line'  => $function->getNode()->getAttribute( 'endLine' ),
+					'arguments' => export_arguments( $function->getArguments() ),
+					'doc'       => export_docblock( $function ),
+					'hooks'     => array(),
+				);
+
+				if ( ! empty( $function->uses ) ) {
+					$func['uses'] = export_uses( $function->uses );
+
+					if ( ! empty( $function->uses['hooks'] ) ) {
+						$func['hooks'] = export_hooks( $function->uses['hooks'] );
+					}
+				}
+
+				$out['functions'][] = $func;
+			}
+
+			foreach ( $file->getClasses() as $class ) {
+				$class_data = array(
+					'name'       => $class->getShortName(),
+					'namespace'  => $class->getNamespace(),
+					'line'       => $class->getLineNumber(),
+					'end_line'   => $class->getNode()->getAttribute( 'endLine' ),
+					'final'      => $class->isFinal(),
+					'abstract'   => $class->isAbstract(),
+					'extends'    => $class->getParentClass(),
+					'implements' => $class->getInterfaces(),
+					'properties' => export_properties( $class->getProperties() ),
+					'methods'    => export_methods( $class->getMethods() ),
+					'doc'        => export_docblock( $class ),
+				);
+
+				$out['classes'][] = $class_data;
+			}
+
+			$output[] = $out;
 		}
-
-		foreach ( $file->getClasses() as $class ) {
-			$class_data = array(
-				'name'       => $class->getShortName(),
-				'namespace'  => $class->getNamespace(),
-				'line'       => $class->getLineNumber(),
-				'end_line'   => $class->getNode()->getAttribute( 'endLine' ),
-				'final'      => $class->isFinal(),
-				'abstract'   => $class->isAbstract(),
-				'extends'    => $class->getParentClass(),
-				'implements' => $class->getInterfaces(),
-				'properties' => export_properties( $class->getProperties() ),
-				'methods'    => export_methods( $class->getMethods() ),
-				'doc'        => export_docblock( $class ),
-			);
-
-			$out['classes'][] = $class_data;
-		}
-
-		$output[] = $out;
+	} catch ( \Exception | \Error $e ) {
+		error_log( \sprintf( 'Error processing file [%s]: %s', $filename, $e->getMessage() ) );
+		throw $e;
 	}
+
+	/*
+	 * nikic/php-parser in version 3 started adding a namespace prefix
+	 * at the start of global names, but this is different than how the
+	 * documentation was previously generated. this removes those prefixes
+	 * by removing a leading reverse solidus (\) when no other reverse
+	 * solidus appears before the end of a sequence of PHP identifier
+	 * characters.
+	 */
+	array_walk_recursive(
+		$output,
+		static function( &$value ) {
+			if ( is_string( $value ) ) {
+				// "\wp_kses()" -> "wp_kses()"
+				$without_global_namespace = preg_replace(
+					'~(^|\p{Z})\\\\([A-Z_a-z\x80-\xFF][0-9A-Z_a-z\x80-\xFF]*)([:(\p{Z}]|->|$)~',
+					'$1$2$3',
+					$value,
+				);
+
+				if ( $value !== $without_global_namespace ) {
+					$value = $without_global_namespace;
+				}
+			}
+		}
+	);
 
 	return $output;
 }
@@ -396,8 +429,13 @@ function export_uses( array $uses ) {
 						|| '_deprecated_hook' === $name
 					) {
 						$arguments = $element->getNode()->args;
+						$version   = null;
 
-						$out[ $type ][0]['deprecation_version'] = $arguments[1]->value->value;
+						if ( isset( $arguments[1]->value->value ) && is_scalar( $arguments[1]->value->value ) ) {
+							$version = (string) $arguments[1]->value->value;
+						}
+
+						$out[ $type ][0]['deprecation_version'] = $version;
 					}
 
 					break;

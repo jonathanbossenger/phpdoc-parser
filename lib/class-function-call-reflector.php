@@ -20,30 +20,41 @@ class Function_Call_Reflector extends BaseReflector {
 	 */
 	public function getName() {
 		if ( isset( $this->node->namespacedName ) ) {
-			return '\\' . implode( '\\', $this->node->namespacedName->parts );
+			return '\\' . $this->nameToString( $this->node->namespacedName );
 		}
 
 		$shortName = $this->getShortName();
 
-		if ( is_a( $shortName, 'PHPParser_Node_Name_FullyQualified' ) ) {
+		if ( is_a( $shortName, 'PhpParser\Node\Name\FullyQualified' ) ) {
 			return '\\' . (string) $shortName;
 		}
 
-		if ( is_a( $shortName, 'PHPParser_Node_Name' ) ) {
+		if ( is_a( $shortName, 'PhpParser\Node\Name' ) ) {
 			return (string) $shortName;
 		}
 
-		/** @var \PHPParser_Node_Expr_ArrayDimFetch $shortName */
-		if ( is_a( $shortName, 'PHPParser_Node_Expr_ArrayDimFetch' ) ) {
-			$var = $shortName->var->name;
-			$dim = $shortName->dim->name->parts[0];
+		/** @var \PhpParser\Node\Expr\ArrayDimFetch $shortName */
+		if ( is_a( $shortName, 'PhpParser\Node\Expr\ArrayDimFetch' ) ) {
+			$var = $this->nameToString( $shortName->var->name );
+			$dim = isset( $shortName->dim->name )
+				? $this->nameToString( $shortName->dim->name )
+				: ( isset( $shortName->dim->value ) ? $shortName->dim->value : (string) $shortName->dim );
 
 			return "\${$var}[{$dim}]";
 		}
 
-		/** @var \PHPParser_Node_Expr_Variable $shortName */
-		if ( is_a( $shortName, 'PHPParser_Node_Expr_Variable' ) ) {
-			return $shortName->name;
+		/** @var \PhpParser\Node\Expr\Variable $shortName */
+		if ( is_a( $shortName, 'PhpParser\Node\Expr\Variable' ) ) {
+			return $this->nameToString( $shortName->name );
+		}
+
+		/** @var \PhpParser\Node\Expr\PropertyFetch $shortName */
+		if ( is_a( $shortName, 'PhpParser\Node\Expr\PropertyFetch' ) ) {
+			return sprintf(
+				'($%s->%s)',
+				$this->nameToString( $shortName->var->name ),
+				$this->nameToString( $shortName->name )
+			);
 		}
 
 		return (string) $shortName;

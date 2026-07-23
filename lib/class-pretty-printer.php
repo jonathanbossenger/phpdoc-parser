@@ -2,21 +2,34 @@
 
 namespace WP_Parser;
 
-use PHPParser_Node_Arg;
-use PHPParser_PrettyPrinter_Default;
-
 /**
  * Extends default printer for arguments.
  */
-class Pretty_Printer extends PHPParser_PrettyPrinter_Default {
+class Pretty_Printer extends \PhpParser\PrettyPrinter\Standard {
 	/**
 	 * Pretty prints an argument.
 	 *
-	 * @param PHPParser_Node_Arg $node Expression argument
+	 * @param \PhpParser\Node\Arg $node Expression argument
 	 *
 	 * @return string Pretty printed argument
 	 */
-	public function prettyPrintArg( PHPParser_Node_Arg $node ) {
-		return str_replace( "\n" . $this->noIndentToken, "\n", $this->p( $node ) );
+	public function prettyPrintArg( \PhpParser\Node\Arg $node ) {
+		$printed = '';
+
+		if ( null !== $node->name ) {
+			$printed .= $node->name->toString() . ': ';
+		}
+
+		if ( $node->byRef ) {
+			$printed .= '&';
+		}
+
+		if ( $node->unpack ) {
+			$printed .= '...';
+		}
+
+		$printed .= $this->prettyPrintExpr( $node->value );
+
+		return $printed;
 	}
 }
